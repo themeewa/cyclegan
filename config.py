@@ -12,13 +12,13 @@ if torch.backends.mps.is_available():
 # DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
 TRAIN_DIR = "dataset/train"
 VAL_DIR = "dataset/val"
-BATCH_SIZE = 1
+BATCH_SIZE = 4
 LEARNING_RATE = 2e-4
 LAMBDA_IDENTITY = 0.0  # use identity loss
 LAMBDA_CYCLE = 10  # use cycle loss
 NUM_EPOCHS = 200
 NUM_WORKERS = 4
-SAVE_FREQ = 10  # save model every SAVE_FREQ epochs
+SAVE_FREQ = 100  # save model every SAVE_FREQ epochs
 LOAD_MODEL = True
 SAVE_MODEL = True
 CHECKPOINT_GEN_H = "genH.pth.tar"

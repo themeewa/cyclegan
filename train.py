@@ -1,5 +1,5 @@
 import torch
-from dataset import HorseZebraDataset
+from dataset import NoFireFireDataset
 import sys
 import config
 import torch.nn as nn
@@ -14,22 +14,22 @@ from tqdm import tqdm
 def train_fn(disc_H, disc_Z, gen_Z, gen_H, loader, opt_disc, opt_gen, l1, mse, d_scaler, g_scaler):
     loop = tqdm(loader, leave=True)
 
-    for idx, (zebra, horse) in enumerate(loop):
-        zebra = zebra.to(config.DEVICE)
-        horse = horse.to(config.DEVICE)
+    for idx, (fire, nofire) in enumerate(loop):
+        fire = fire.to(config.DEVICE)
+        nofire = nofire.to(config.DEVICE)
 
         # Train Discriminators H and Z
         with torch.amp.autocast(device_type=config.DEVICE):
-            fake_horse = gen_H(zebra)
-            D_H_real = disc_H(horse)
-            D_H_fake = disc_H(fake_horse.detach())
+            fake_nofire = gen_H(fire)
+            D_H_real = disc_H(nofire)
+            D_H_fake = disc_H(fake_nofire.detach())
             D_H_real_loss = mse(D_H_real, torch.ones_like(D_H_real))
             D_H_fake_loss = mse(D_H_fake, torch.zeros_like(D_H_fake))
             D_H_loss = (D_H_real_loss + D_H_fake_loss) / 2
 
-            fake_zebra = gen_Z(horse)
-            D_Z_real = disc_Z(zebra)
-            D_Z_fake = disc_Z(fake_zebra.detach())
+            fake_fire = gen_Z(nofire)
+            D_Z_real = disc_Z(fire)
+            D_Z_fake = disc_Z(fake_fire.detach())
             D_Z_real_loss = mse(D_Z_real, torch.ones_like(D_Z_real))
             D_Z_fake_loss = mse(D_Z_fake, torch.zeros_like(D_Z_fake))
             D_Z_loss = (D_Z_real_loss + D_Z_fake_loss) / 2
@@ -43,28 +43,28 @@ def train_fn(disc_H, disc_Z, gen_Z, gen_H, loader, opt_disc, opt_gen, l1, mse, d
 
         # Train Generators H and Z
         with torch.amp.autocast(device_type=config.DEVICE):
-            D_H_fake = disc_H(fake_horse)
-            D_Z_fake = disc_Z(fake_zebra)
+            D_H_fake = disc_H(fake_nofire)
+            D_Z_fake = disc_Z(fake_fire)
             loss_G_H = mse(D_H_fake, torch.ones_like(D_H_fake))
             loss_G_Z = mse(D_Z_fake, torch.ones_like(D_Z_fake))
 
-            cycle_zebra = gen_Z(fake_horse)
-            cycle_horse = gen_H(fake_zebra)
-            cycle_zebra_loss = l1(zebra, cycle_zebra)
-            cycle_horse_loss = l1(horse, cycle_horse)
+            cycle_fire = gen_Z(fake_nofire)
+            cycle_nofire = gen_H(fake_fire)
+            cycle_fire_loss = l1(fire, cycle_fire)
+            cycle_nofire_loss = l1(nofire, cycle_nofire)
 
-            identity_horse = gen_H(horse)
-            identity_zebra = gen_Z(zebra)
-            identity_horse_loss = l1(horse, identity_horse)
-            identity_zebra_loss = l1(zebra, identity_zebra)
+            identity_nofire = gen_H(nofire)
+            identity_fire = gen_Z(fire)
+            identity_nofire_loss = l1(nofire, identity_nofire)
+            identity_fire_loss = l1(fire, identity_fire)
 
             G_loss = (
                 loss_G_Z
                 + loss_G_H
-                + cycle_horse_loss * config.LAMBDA_CYCLE
-                + cycle_zebra_loss * config.LAMBDA_CYCLE
-                + identity_horse_loss * config.LAMBDA_IDENTITY
-                + identity_zebra_loss * config.LAMBDA_IDENTITY
+                + cycle_nofire_loss * config.LAMBDA_CYCLE
+                + cycle_fire_loss * config.LAMBDA_CYCLE
+                + identity_nofire_loss * config.LAMBDA_IDENTITY
+                + identity_fire_loss * config.LAMBDA_IDENTITY
             )
         opt_gen.zero_grad()
         g_scaler.scale(G_loss).backward()
@@ -73,13 +73,13 @@ def train_fn(disc_H, disc_Z, gen_Z, gen_H, loader, opt_disc, opt_gen, l1, mse, d
 
         if idx % config.SAVE_FREQ == 0:
             save_image(
-                fake_horse,
-                f"saved_images/horse_{idx}.png",
+                fake_nofire,
+                f"saved_images/nofire_{idx}.png",
                 normalize=True,
             )
             save_image(
-                fake_zebra,
-                f"saved_images/zebra_{idx}.png",
+                fake_fire,
+                f"saved_images/fire_{idx}.png",
                 normalize=True,
             )
         
@@ -117,9 +117,9 @@ def main():
             config.CHECKPOINT_CRITIC_Z, disc_Z, opt_disc, config.LEARNING_RATE,
         )
 
-    dataset = HorseZebraDataset(
-        root_horse=config.TRAIN_DIR + "/horses",
-        root_zebra=config.TRAIN_DIR + "/zebras",
+    dataset = NoFireFireDataset(
+        root_nofire=config.TRAIN_DIR + "/nofire",
+        root_fire=config.TRAIN_DIR + "/fire",
         transform=config.transform,
     )
     loader = DataLoader(
