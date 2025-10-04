@@ -1,0 +1,7 @@
+./data/*
+./data2/*
+.DS_Store
+__pycache__/
+*.pth
+*.tar
+.ipynb_checkpoints
