@@ -2,10 +2,16 @@ import torch
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-# DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
-TRAIN_DIR = "data2/train"
-VAL_DIR = "data2/val"
+DEVICE = "cpu"
+
+if torch.cuda.is_available():
+    DEVICE = "cuda"
+if torch.backends.mps.is_available():
+    DEVICE = "mps"
+
+# DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
+TRAIN_DIR = "dataset/train"
+VAL_DIR = "dataset/val"
 BATCH_SIZE = 1
 LEARNING_RATE = 2e-4
 LAMBDA_IDENTITY = 0.0  # use identity loss
